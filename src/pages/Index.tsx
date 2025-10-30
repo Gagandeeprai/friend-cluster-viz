@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { InputForm } from "@/components/InputForm";
 import { GraphVisualization } from "@/components/GraphVisualization";
 import { ResultsDisplay } from "@/components/ResultsDisplay";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { ExportOptions } from "@/components/ExportOptions";
 import { findConnectedComponents, GraphData } from "@/lib/graphAlgorithms";
 import { Network, Github, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,6 +11,11 @@ import { Button } from "@/components/ui/button";
 const Index = () => {
   const [graphData, setGraphData] = useState<GraphData | null>(null);
   const [inputStats, setInputStats] = useState<{ n: number; edges: number } | null>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
+
+  const handleSvgRef = (ref: React.RefObject<SVGSVGElement>) => {
+    (svgRef as any).current = ref.current;
+  };
 
   const handleAnalyze = (n: number, edges: [number, number][]) => {
     const data = findConnectedComponents(n, edges);
@@ -35,15 +42,16 @@ const Index = () => {
               <Button variant="outline" size="sm" asChild>
                 <a href="https://github.com" target="_blank" rel="noopener noreferrer">
                   <Github className="w-4 h-4 mr-2" />
-                  GitHub
+                  <span className="hidden sm:inline">GitHub</span>
                 </a>
               </Button>
               <Button variant="outline" size="sm" asChild>
                 <a href="#docs" className="flex items-center">
                   <BookOpen className="w-4 h-4 mr-2" />
-                  Docs
+                  <span className="hidden sm:inline">Docs</span>
                 </a>
               </Button>
+              <ThemeToggle />
             </div>
           </div>
         </div>
@@ -52,13 +60,13 @@ const Index = () => {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8 space-y-8">
         {/* Hero Section */}
-        <section className="text-center space-y-4 py-8 animate-fade-in">
-          <h2 className="text-4xl md:text-5xl font-bold text-foreground">
+        <section className="text-center space-y-4 py-8 px-4 animate-fade-in">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground leading-tight">
             Discover Friend Group Clusters
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Analyze social connections using graph theory. Identify separate friend groups by finding 
-            connected components in an undirected graph using BFS/DFS algorithms.
+          <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+            Analyze social connections using graph theory. Identify separate friend groups by finding
+            connected components in an undirected graph using BFS algorithms.
           </p>
         </section>
 
@@ -71,23 +79,28 @@ const Index = () => {
         {graphData && inputStats && (
           <>
             <section className="space-y-6">
-              <ResultsDisplay 
+              <ResultsDisplay
                 components={graphData.components}
                 totalStudents={inputStats.n}
                 totalConnections={inputStats.edges}
+                componentDetails={graphData.componentDetails}
               />
               
               <div className="bg-card rounded-2xl p-6 shadow-lg border border-border animate-slide-up">
-                <div className="mb-4">
-                  <h3 className="text-xl font-semibold text-foreground mb-2">
-                    Interactive Graph Visualization
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    Each color represents a separate friend group (connected component). 
-                    Drag nodes to rearrange, scroll to zoom, and click to interact.
-                  </p>
+                <div className="mb-4 space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                    <div>
+                      <h3 className="text-lg sm:text-xl font-semibold text-foreground mb-2">
+                        Interactive Graph Visualization
+                      </h3>
+                      <p className="text-xs sm:text-sm text-muted-foreground">
+                        Each color represents a separate friend group. Drag nodes, scroll to zoom, hover to highlight.
+                      </p>
+                    </div>
+                    <ExportOptions graphData={graphData} svgRef={svgRef} />
+                  </div>
                 </div>
-                <GraphVisualization data={graphData} />
+                <GraphVisualization data={graphData} onSvgRef={handleSvgRef} />
               </div>
             </section>
           </>

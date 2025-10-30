@@ -54,6 +54,12 @@ export const InputForm = ({ onAnalyze }: InputFormProps) => {
     toast.info("Example loaded! Click Visualize to see the result.");
   };
 
+  const loadComplexExample = () => {
+    setN("12");
+    setEdgesText("1 2, 2 3, 3 4, 5 6, 6 7, 8 9, 10 11, 11 12, 12 10");
+    toast.info("Complex example loaded with multiple groups!");
+  };
+
   return (
     <Card className="w-full shadow-md border-[hsl(var(--border))] bg-card">
       <CardHeader>
@@ -100,21 +106,32 @@ export const InputForm = ({ onAnalyze }: InputFormProps) => {
             </p>
           </div>
 
-          <div className="flex gap-3">
-            <Button 
-              type="submit" 
-              className="flex-1 bg-gradient-primary hover:opacity-90 transition-opacity"
+          <div className="flex flex-col gap-3">
+            <Button
+              type="submit"
+              className="w-full bg-gradient-primary hover:opacity-90 transition-opacity"
             >
               <Sparkles className="w-4 h-4 mr-2" />
               Visualize Graph
             </Button>
-            <Button 
-              type="button" 
-              variant="outline"
-              onClick={loadExample}
-            >
-              Load Example
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={loadExample}
+                className="flex-1"
+              >
+                Load Simple Example
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={loadComplexExample}
+                className="flex-1"
+              >
+                Load Complex Example
+              </Button>
+            </div>
           </div>
         </form>
       </CardContent>

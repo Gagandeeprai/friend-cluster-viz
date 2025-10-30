@@ -4,10 +4,17 @@ import { GraphData } from "@/lib/graphAlgorithms";
 
 interface GraphVisualizationProps {
   data: GraphData;
+  onSvgRef?: (ref: React.RefObject<SVGSVGElement>) => void;
 }
 
-export const GraphVisualization = ({ data }: GraphVisualizationProps) => {
+export const GraphVisualization = ({ data, onSvgRef }: GraphVisualizationProps) => {
   const svgRef = useRef<SVGSVGElement>(null);
+
+  useEffect(() => {
+    if (onSvgRef) {
+      onSvgRef(svgRef);
+    }
+  }, [onSvgRef]);
 
   useEffect(() => {
     if (!svgRef.current || !data.nodes.length) return;
@@ -18,26 +25,28 @@ export const GraphVisualization = ({ data }: GraphVisualizationProps) => {
     const width = svgRef.current.clientWidth;
     const height = svgRef.current.clientHeight;
 
-    // Color scale for different groups
+    // Color scale for different groups - professional palette
     const colors = [
       "hsl(188, 95%, 42%)",
-      "hsl(265, 85%, 65%)", 
+      "hsl(210, 90%, 55%)",
       "hsl(350, 85%, 60%)",
-      "hsl(45, 90%, 55%)",
       "hsl(160, 75%, 45%)",
-      "hsl(290, 70%, 55%)",
+      "hsl(45, 90%, 55%)",
       "hsl(25, 85%, 55%)",
-      "hsl(200, 80%, 50%)",
+      "hsl(280, 70%, 55%)",
+      "hsl(120, 60%, 50%)",
     ];
 
     const colorScale = (group: number) => colors[(group - 1) % colors.length];
 
-    // Create force simulation
+    // Create force simulation with improved physics
     const simulation = d3.forceSimulation(data.nodes as any)
-      .force("link", d3.forceLink(data.links).id((d: any) => d.id).distance(120))
-      .force("charge", d3.forceManyBody().strength(-400))
+      .force("link", d3.forceLink(data.links).id((d: any) => d.id).distance(150))
+      .force("charge", d3.forceManyBody().strength(-500))
       .force("center", d3.forceCenter(width / 2, height / 2))
-      .force("collision", d3.forceCollide().radius(30));
+      .force("collision", d3.forceCollide().radius(35))
+      .force("x", d3.forceX(width / 2).strength(0.05))
+      .force("y", d3.forceY(height / 2).strength(0.05));
 
     // Create container groups
     const g = svg.append("g");
@@ -113,20 +122,41 @@ export const GraphVisualization = ({ data }: GraphVisualizationProps) => {
       .style("pointer-events", "none")
       .style("user-select", "none");
 
-    // Add hover effects
+    // Add hover effects and tooltips
     nodeGroup
-      .on("mouseenter", function() {
+      .on("mouseenter", function(event, d: any) {
         const circles = d3.select(this).selectAll("circle");
         circles.filter((d, i) => i === 0)
           .transition()
           .duration(200)
           .attr("r", 28)
           .attr("stroke-width", 4);
-        
+
         circles.filter((d, i) => i === 1)
           .transition()
           .duration(200)
           .attr("r", 21);
+
+        // Highlight connected nodes
+        const connectedNodes = new Set();
+        data.links.forEach((link: any) => {
+          if (link.source.id === d.id || link.source === d.id) {
+            connectedNodes.add(link.target.id || link.target);
+          }
+          if (link.target.id === d.id || link.target === d.id) {
+            connectedNodes.add(link.source.id || link.source);
+          }
+        });
+
+        nodeGroup.style("opacity", (node: any) => {
+          return node.id === d.id || connectedNodes.has(node.id) ? 1 : 0.3;
+        });
+
+        link.style("opacity", (l: any) => {
+          const sourceId = l.source.id || l.source;
+          const targetId = l.target.id || l.target;
+          return sourceId === d.id || targetId === d.id ? 0.6 : 0.1;
+        });
       })
       .on("mouseleave", function() {
         const circles = d3.select(this).selectAll("circle");
@@ -135,11 +165,15 @@ export const GraphVisualization = ({ data }: GraphVisualizationProps) => {
           .duration(200)
           .attr("r", 24)
           .attr("stroke-width", 3);
-        
+
         circles.filter((d, i) => i === 1)
           .transition()
           .duration(200)
           .attr("r", 18);
+
+        // Reset opacity
+        nodeGroup.style("opacity", 1);
+        link.style("opacity", 0.3);
       });
 
     // Drag functions

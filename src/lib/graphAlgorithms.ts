@@ -8,10 +8,16 @@ export interface GraphLink {
   target: number;
 }
 
+export interface ComponentDetail {
+  id: number;
+  size: number;
+}
+
 export interface GraphData {
   nodes: GraphNode[];
   links: GraphLink[];
   components: number;
+  componentDetails: ComponentDetail[];
 }
 
 export function findConnectedComponents(n: number, edges: [number, number][]): GraphData {
@@ -30,11 +36,13 @@ export function findConnectedComponents(n: number, edges: [number, number][]): G
   const visited = new Array(n + 1).fill(false);
   let components = 0;
   const nodeToGroup: { [key: number]: number } = {};
+  const componentSizes: { [key: number]: number } = {};
 
-  function bfs(start: number, group: number) {
+  function bfs(start: number, group: number): number {
     const queue = [start];
     visited[start] = true;
     nodeToGroup[start] = group;
+    let size = 1;
 
     while (queue.length) {
       const node = queue.shift()!;
@@ -43,16 +51,19 @@ export function findConnectedComponents(n: number, edges: [number, number][]): G
           visited[neighbor] = true;
           nodeToGroup[neighbor] = group;
           queue.push(neighbor);
+          size++;
         }
       }
     }
+    return size;
   }
 
   // Find all connected components
   for (let i = 1; i <= n; i++) {
     if (!visited[i]) {
       components++;
-      bfs(i, components);
+      const size = bfs(i, components);
+      componentSizes[components] = size;
     }
   }
 
@@ -62,10 +73,14 @@ export function findConnectedComponents(n: number, edges: [number, number][]): G
     group: nodeToGroup[i + 1] || components + 1,
   }));
 
-  const links: GraphLink[] = edges.map(([u, v]) => ({ 
-    source: u, 
-    target: v 
+  const links: GraphLink[] = edges.map(([u, v]) => ({
+    source: u,
+    target: v
   }));
 
-  return { nodes, links, components };
+  const componentDetails: ComponentDetail[] = Object.entries(componentSizes)
+    .map(([id, size]) => ({ id: parseInt(id), size }))
+    .sort((a, b) => b.size - a.size);
+
+  return { nodes, links, components, componentDetails };
 }

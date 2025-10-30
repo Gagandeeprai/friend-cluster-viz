@@ -42,12 +42,13 @@ export const GraphVisualization = ({ data }: GraphVisualizationProps) => {
     // Create container groups
     const g = svg.append("g");
 
-    // Add zoom behavior
+    // Add zoom behavior with touch support
     const zoom = d3.zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.3, 3])
       .on("zoom", (event) => {
         g.attr("transform", event.transform);
-      });
+      })
+      .touchable(() => true); // Enable touch support
 
     svg.call(zoom as any);
 
@@ -72,7 +73,8 @@ export const GraphVisualization = ({ data }: GraphVisualizationProps) => {
         d3.drag<SVGGElement, any>()
           .on("start", dragstarted)
           .on("drag", dragged)
-          .on("end", dragended) as any
+          .on("end", dragended)
+          .touchable(() => true) as any // Enable touch dragging
       );
 
     // Draw outer circles (bubbles)
@@ -180,8 +182,8 @@ export const GraphVisualization = ({ data }: GraphVisualizationProps) => {
   return (
     <svg
       ref={svgRef}
-      className="w-full h-full rounded-xl bg-[hsl(var(--graph-bg))] border border-[hsl(var(--graph-border))]"
-      style={{ minHeight: "600px" }}
+      className="w-full h-full rounded-xl bg-[hsl(var(--graph-bg))] border border-[hsl(var(--graph-border))] touch-none"
+      style={{ minHeight: "600px", touchAction: "none" }}
     />
   );
 };

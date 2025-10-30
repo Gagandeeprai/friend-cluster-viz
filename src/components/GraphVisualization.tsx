@@ -61,55 +61,84 @@ export const GraphVisualization = ({ data }: GraphVisualizationProps) => {
       .enter()
       .append("line");
 
-    // Draw nodes
-    const node = g.append("g")
-      .selectAll("circle")
+    // Create node groups to hold circle, icon, and label
+    const nodeGroup = g.append("g")
+      .selectAll("g")
       .data(data.nodes)
       .enter()
-      .append("circle")
-      .attr("r", 16)
-      .attr("fill", (d) => colorScale(d.group))
-      .attr("stroke", "hsl(var(--card))")
-      .attr("stroke-width", 3)
+      .append("g")
       .style("cursor", "grab")
       .call(
-        d3.drag<SVGCircleElement, any>()
+        d3.drag<SVGGElement, any>()
           .on("start", dragstarted)
           .on("drag", dragged)
           .on("end", dragended) as any
       );
 
-    // Add hover effects
-    node
-      .on("mouseenter", function() {
-        d3.select(this)
-          .transition()
-          .duration(200)
-          .attr("r", 20)
-          .attr("stroke-width", 4);
-      })
-      .on("mouseleave", function() {
-        d3.select(this)
-          .transition()
-          .duration(200)
-          .attr("r", 16)
-          .attr("stroke-width", 3);
-      });
+    // Draw outer circles (bubbles)
+    const node = nodeGroup
+      .append("circle")
+      .attr("r", 24)
+      .attr("fill", (d) => colorScale(d.group))
+      .attr("stroke", "hsl(var(--card))")
+      .attr("stroke-width", 3)
+      .attr("opacity", 0.9);
 
-    // Add labels
-    const label = g.append("g")
-      .selectAll("text")
-      .data(data.nodes)
-      .enter()
+    // Draw inner circles for person background
+    nodeGroup
+      .append("circle")
+      .attr("r", 18)
+      .attr("fill", "hsl(var(--card))")
+      .attr("opacity", 0.95);
+
+    // Add person icon using SVG path (simplified person silhouette)
+    nodeGroup
+      .append("path")
+      .attr("d", "M0,-6 C2,-6 3,-5 3,-3 C3,-1 2,0 0,0 C-2,0 -3,-1 -3,-3 C-3,-5 -2,-6 0,-6 M-4,2 C-4,2 -5,4 -5,8 L5,8 C5,4 4,2 4,2 C4,1 2,1 0,1 C-2,1 -4,1 -4,2")
+      .attr("fill", (d) => colorScale(d.group))
+      .attr("opacity", 0.8)
+      .style("pointer-events", "none");
+
+    // Add number labels
+    const label = nodeGroup
       .append("text")
       .text((d) => d.id)
-      .attr("font-size", 13)
-      .attr("font-weight", "600")
-      .attr("fill", "hsl(var(--card))")
+      .attr("font-size", 11)
+      .attr("font-weight", "700")
+      .attr("fill", (d) => colorScale(d.group))
       .attr("text-anchor", "middle")
-      .attr("dy", 5)
+      .attr("dy", 16)
       .style("pointer-events", "none")
       .style("user-select", "none");
+
+    // Add hover effects
+    nodeGroup
+      .on("mouseenter", function() {
+        const circles = d3.select(this).selectAll("circle");
+        circles.filter((d, i) => i === 0)
+          .transition()
+          .duration(200)
+          .attr("r", 28)
+          .attr("stroke-width", 4);
+        
+        circles.filter((d, i) => i === 1)
+          .transition()
+          .duration(200)
+          .attr("r", 21);
+      })
+      .on("mouseleave", function() {
+        const circles = d3.select(this).selectAll("circle");
+        circles.filter((d, i) => i === 0)
+          .transition()
+          .duration(200)
+          .attr("r", 24)
+          .attr("stroke-width", 3);
+        
+        circles.filter((d, i) => i === 1)
+          .transition()
+          .duration(200)
+          .attr("r", 18);
+      });
 
     // Drag functions
     function dragstarted(event: any, d: any) {
@@ -139,13 +168,8 @@ export const GraphVisualization = ({ data }: GraphVisualizationProps) => {
         .attr("x2", (d: any) => d.target.x)
         .attr("y2", (d: any) => d.target.y);
 
-      node
-        .attr("cx", (d: any) => d.x)
-        .attr("cy", (d: any) => d.y);
-
-      label
-        .attr("x", (d: any) => d.x)
-        .attr("y", (d: any) => d.y);
+      nodeGroup
+        .attr("transform", (d: any) => `translate(${d.x},${d.y})`);
     });
 
     return () => {

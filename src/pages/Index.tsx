@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { InputForm } from "@/components/InputForm";
-import { AnimatedGraphVisualization } from "@/components/AnimatedGraphVisualization";
+import { GraphVisualization } from "@/components/GraphVisualization";
 import { ResultsDisplay } from "@/components/ResultsDisplay";
 import { findConnectedComponents, GraphData } from "@/lib/graphAlgorithms";
 import { Network, Github, BookOpen } from "lucide-react";
@@ -80,14 +80,14 @@ const Index = () => {
               <div className="bg-card rounded-2xl p-6 shadow-lg border border-border animate-slide-up">
                 <div className="mb-4">
                   <h3 className="text-xl font-semibold text-foreground mb-2">
-                    Animated Graph Visualization
+                    Interactive Graph Visualization
                   </h3>
                   <p className="text-sm text-muted-foreground">
-                    Watch as connections form one by one! Each color represents a separate friend group. 
-                    Click "Start Animation" to see the graph build step-by-step.
+                    Each color represents a separate friend group (connected component). 
+                    Drag nodes to rearrange, scroll to zoom, and click to interact.
                   </p>
                 </div>
-                <AnimatedGraphVisualization data={graphData} />
+                <GraphVisualization data={graphData} />
               </div>
             </section>
           </>
